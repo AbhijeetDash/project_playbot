@@ -2,7 +2,6 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:playbot/application/application.dart';
-import 'package:playbot/models/enums.dart';
 import 'package:playbot/services/bluetooth_service.dart';
 
 part './event.dart';
@@ -22,8 +21,8 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     Emitter emit,
   ) async {
     try {
-      bool res = await service.enableBluetooth();      
-      if(res) {
+      bool res = await service.enableBluetooth();
+      if (res) {
         emit(BleEnableState());
       }
     } catch (e) {
@@ -51,9 +50,25 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     Emitter emit,
   ) async {
     try {
-      final BluetoothDiscoveryResult discoveryResult =
+      final Stream<BluetoothDiscoveryResult> scanStream =
           await service.scanDevices();
-      emit(BleScanResult(devicesList: discoveryResult, discoveryState: PlayDiscoveryState.deviceFound));
+
+      emit(BleScanStart());
+
+      // Listen to scan
+      await scanStream
+          .firstWhere((test) => test.device.name!.contains("HC-05"))
+          .then((device) {
+            // The stream found a match.. 
+            // Emit success case.
+            emit(BleScanResult(devices: device, isSuccess: true));
+          })
+          .onError((error, st) {
+            // No match found and scan is completed..
+            // Emit error case.
+            emit(BleScanResult(isSuccess: false));
+          });
+      return;
     } catch (e) {
       rethrow;
     }

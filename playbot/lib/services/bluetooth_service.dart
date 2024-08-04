@@ -5,7 +5,7 @@ abstract class BluetoothService {
 
   Future<bool> disableBluetooth();
 
-  Future<BluetoothDiscoveryResult> scanDevices();
+  Future<Stream<BluetoothDiscoveryResult>> scanDevices();
 
   Future<void> connectToDevice();
 }
@@ -19,11 +19,10 @@ class BluetoothServiceImpl extends BluetoothService {
   }
 
   @override
-  Future<BluetoothDiscoveryResult> scanDevices() async {
+  Future<Stream<BluetoothDiscoveryResult>> scanDevices() async {
     try {
       Stream<BluetoothDiscoveryResult> result = FlutterBluetoothSerial.instance.startDiscovery();
-      // We only want to return the HC-05 Bluetooth module.
-      return await result.firstWhere((discoveryResult) => discoveryResult.device.name == "HC-05");
+      return result;
     } catch (e) {
       rethrow;
     }

@@ -17,12 +17,17 @@ class BleDisableState extends BleState {
   List<Object?> get props => [];
 }
 
-class BleScanResult extends BleState {
-  final PlayDiscoveryState discoveryState;
-  final BluetoothDiscoveryResult devicesList;
+class BleScanStart extends BleState {
+  @override
+  List<Object?> get props => [];
+}
 
-  BleScanResult({required this.devicesList, required this.discoveryState});
+class BleScanResult extends BleState {
+  final bool isSuccess;
+  final BluetoothDiscoveryResult? devices;
+
+  BleScanResult({this.devices, required this.isSuccess});
 
   @override
-  List<Object?> get props => [discoveryState];
+  List<Object?> get props => [isSuccess, devices];
 }
