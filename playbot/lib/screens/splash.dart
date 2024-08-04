@@ -1,6 +1,9 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:playbot/screens/connect.dart';
 import 'package:playbot/utilities/util_assets.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -11,6 +14,24 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  void _navigateToConnect() {
+    Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const ConnectScreen()));
+  }
+
+  @override
+  void initState() {
+    Timer(const Duration(seconds: 2), () async {
+      // Allow it all the time. I'm the only user now.
+      Permission.bluetoothScan.request().then((val) {
+        Permission.bluetoothConnect.request().then((onValue) {
+          _navigateToConnect();
+        });
+      });
+    });
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -34,7 +55,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
                     child: Container(
-                      width: 250.0,
+                      margin: const EdgeInsets.symmetric(horizontal: 30.0),
                       height: 100,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(

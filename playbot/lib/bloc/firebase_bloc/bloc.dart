@@ -4,7 +4,5 @@ part  './event.dart';
 part './state.dart';
 
 class FirebaseBloc extends Bloc<FireEvent, FireState> {
-  FirebaseBloc(super.initialState){
-    
-  }
+  FirebaseBloc(super.initialState);
 }
