@@ -40,3 +40,12 @@ class BleConnectSuccess extends BleState {
   @override
   List<Object?> get props => [connection];
 }
+
+class BleCurrentState extends BleState {
+  final BluetoothState state;
+
+  BleCurrentState({required this.state});
+  
+  @override
+  List<Object?> get props => [];
+}

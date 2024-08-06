@@ -2,6 +2,8 @@ part of 'bloc.dart';
 
 abstract class BleEvent {}
 
+class BleEventGetState extends BleEvent {}
+
 class BleEventEnable extends BleEvent {}
 
 class BleEventDisable extends BleEvent {}
