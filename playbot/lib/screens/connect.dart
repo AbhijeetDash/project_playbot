@@ -1,5 +1,8 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:playbot/bloc/bluetooth_bloc/bloc.dart';
 import 'package:playbot/utilities/util_assets.dart';
 
@@ -14,14 +17,33 @@ class ConnectScreen extends StatefulWidget {
 }
 
 class _ConnectScreenState extends State<ConnectScreen> {
+  late BluetoothDevice device;
+  late BluetoothConnection connection;
   late final BleBloc bleBloc;
+
   bool bleStateOn = false;
   bool showScanning = false;
+  bool deviceFound = false;
+  bool isConneted = false;
 
   @override
   void initState() {
     bleBloc = context.read<BleBloc>();
     super.initState();
+  }
+
+  void showConnectionSuccess() {
+    final snackBar = SnackBar(
+      content: const Text('CONNECTED'),
+      action: SnackBarAction(
+        label: 'Undo',
+        onPressed: () {
+          // Some code to undo the change.
+        },
+      ),
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
   @override
@@ -62,8 +84,18 @@ class _ConnectScreenState extends State<ConnectScreen> {
                 bleStateOn = false;
               }
 
-              if(state is BleScanResult){
+              if (state is BleScanResult) {
                 showScanning = false;
+                deviceFound = state.isSuccess;
+
+                if (deviceFound) {
+                  device = state.devices!;
+                }
+              }
+
+              if (state is BleConnectSuccess) {
+                isConneted = true;
+                connection = state.connection;
               }
 
               return Padding(
@@ -84,7 +116,8 @@ class _ConnectScreenState extends State<ConnectScreen> {
                             children: [
                               Text(
                                 "ADMIN CONNECT",
-                                style: Theme.of(context).textTheme.headlineMedium,
+                                style:
+                                    Theme.of(context).textTheme.headlineMedium,
                               ),
                               const Spacer(),
                               IconButton(
@@ -103,7 +136,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
                               )
                             ],
                           ),
-                          if (!showScanning) ...[
+                          if (!showScanning && !deviceFound) ...[
                             Text(
                               "Start looking for Playbot Card",
                               style: Theme.of(context)
@@ -164,22 +197,58 @@ class _ConnectScreenState extends State<ConnectScreen> {
                                 ],
                               ),
                             ),
+                          if (deviceFound)
+                            ListTile(
+                              contentPadding: const EdgeInsets.all(0.0),
+                              title: Text(device.name ?? "Playbot"),
+                              subtitle: Text(device.address),
+                              leading: const CircleAvatar(
+                                child: Icon(Icons.important_devices_outlined),
+                              ),
+                              trailing: RawMaterialButton(
+                                onPressed: () {
+                                  // Connect to the device.
+                                  bleBloc.add(BleEventConnect(device: device));
+                                },
+                                fillColor: PlayColors.buttonPurple,
+                                shape: const StadiumBorder(),
+                                child: Text(
+                                  "Connect",
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium!
+                                      .copyWith(color: Colors.white),
+                                ),
+                              ),
+                            )
                         ],
                       ),
                     ),
-
                     const SizedBox(height: 12.0),
-                        Container(
+                    if (isConneted)
+                      InkWell(
+                        onTap: () async {
+                          print("Sending");
+                          connection.output.add(Uint8List.fromList('1'.codeUnits));
+                          await connection.output.allSent;
+                          print("SENT");
+                        },
+                        child: Container(
                           width: double.maxFinite,
                           decoration: BoxDecoration(
-                            color: PlayColors.buttonGreen,
-                            borderRadius: BorderRadius.circular(12.0)
-                          ),
+                              color: PlayColors.buttonGreen,
+                              borderRadius: BorderRadius.circular(12.0)),
                           child: const Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
-                            child: Text("CONECTED", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),),
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 16.0, vertical: 14.0),
+                            child: Text(
+                              "CONNECTED",
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 24),
+                            ),
                           ),
-                        )
+                        ),
+                      ),
                   ],
                 ),
               );

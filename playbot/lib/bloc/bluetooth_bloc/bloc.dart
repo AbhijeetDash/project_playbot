@@ -14,6 +14,7 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     on<BleEventEnable>(_handleEnableEvent);
     on<BleEventDisable>(_handleDisableEvent);
     on<BleEventScan>(_handleScanEvent);
+    on<BleEventConnect>(_handleConnectEvent);
   }
 
   Future<void> _handleEnableEvent(
@@ -40,7 +41,6 @@ class BleBloc extends Bloc<BleEvent, BleState> {
         emit(BleDisableState());
       }
     } catch (e) {
-      print(e);
       rethrow;
     }
   }
@@ -50,25 +50,25 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     Emitter emit,
   ) async {
     try {
-      final Stream<BluetoothDiscoveryResult> scanStream =
-          await service.scanDevices();
+      // Check BleEnable Status
+      BluetoothState state = await service.getBluetoothState();
+      if(state == BluetoothState.STATE_OFF){
+        await service.enableBluetooth();
+      }
 
       emit(BleScanStart());
+      final BluetoothDevice device = await service.scanDevices();
+      emit(BleScanResult(isSuccess: true, devices: device));      
+    } catch (e) {
+      emit(BleScanResult(isSuccess: false));      
+      rethrow;
+    }
+  }
 
-      // Listen to scan
-      await scanStream
-          .firstWhere((test) => test.device.name!.contains("HC-05"))
-          .then((device) {
-            // The stream found a match.. 
-            // Emit success case.
-            emit(BleScanResult(devices: device, isSuccess: true));
-          })
-          .onError((error, st) {
-            // No match found and scan is completed..
-            // Emit error case.
-            emit(BleScanResult(isSuccess: false));
-          });
-      return;
+  Future<void> _handleConnectEvent(BleEventConnect event, Emitter emit) async {
+    try {
+      BluetoothConnection connection = await service.connectToDevice(event.device);
+      emit(BleConnectSuccess(connection: connection));
     } catch (e) {
       rethrow;
     }

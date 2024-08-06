@@ -24,10 +24,19 @@ class BleScanStart extends BleState {
 
 class BleScanResult extends BleState {
   final bool isSuccess;
-  final BluetoothDiscoveryResult? devices;
+  final BluetoothDevice? devices;
 
   BleScanResult({this.devices, required this.isSuccess});
 
   @override
   List<Object?> get props => [isSuccess, devices];
+}
+
+class BleConnectSuccess extends BleState {
+  final BluetoothConnection connection;
+
+  BleConnectSuccess({required this.connection});
+
+  @override
+  List<Object?> get props => [connection];
 }

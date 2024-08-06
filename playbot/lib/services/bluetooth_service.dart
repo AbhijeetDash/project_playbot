@@ -5,24 +5,34 @@ abstract class BluetoothService {
 
   Future<bool> disableBluetooth();
 
-  Future<Stream<BluetoothDiscoveryResult>> scanDevices();
+  Future<BluetoothDevice> scanDevices();
 
-  Future<void> connectToDevice();
+  Future<BluetoothConnection> connectToDevice(BluetoothDevice device);
+
+  Future<BluetoothState> getBluetoothState();
 }
 
 class BluetoothServiceImpl extends BluetoothService {
   @override
-  Future<void> connectToDevice() async {
-    try {} catch (e) {
+  Future<BluetoothConnection> connectToDevice(BluetoothDevice device) async {
+    try {
+      // return the bluetooth connection
+      // tobe used in inputs and outputs
+      return await BluetoothConnection.toAddress(device.address);
+    } catch (e) {
       rethrow;
     }
   }
 
   @override
-  Future<Stream<BluetoothDiscoveryResult>> scanDevices() async {
+  Future<BluetoothDevice> scanDevices() async {
     try {
-      Stream<BluetoothDiscoveryResult> result = FlutterBluetoothSerial.instance.startDiscovery();
-      return result;
+      FlutterBluetoothSerial inst = FlutterBluetoothSerial.instance;
+      Stream<BluetoothDiscoveryResult> result = inst.startDiscovery();
+      BluetoothDiscoveryResult disco = await result.firstWhere((test) => (test.device.name != null && test.device.name == "HC-05"));
+      // Stop the discovery as soon as device is found.
+      inst.cancelDiscovery();
+      return disco.device;
     } catch (e) {
       rethrow;
     }
@@ -58,5 +68,10 @@ class BluetoothServiceImpl extends BluetoothService {
     } catch (e) {
       rethrow;
     }
+  }
+  
+  @override
+  Future<BluetoothState> getBluetoothState() {
+    return FlutterBluetoothSerial.instance.state;
   }
 }
