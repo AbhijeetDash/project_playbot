@@ -29,7 +29,7 @@ class BluetoothServiceImpl extends BluetoothService {
     try {
       FlutterBluetoothSerial inst = FlutterBluetoothSerial.instance;
       Stream<BluetoothDiscoveryResult> result = inst.startDiscovery();
-      BluetoothDiscoveryResult disco = await result.firstWhere((test) => (test.device.name != null && (test.device.name == "HC-05" || test.device.name!.contains("K2"))));
+      BluetoothDiscoveryResult disco = await result.firstWhere((test) => (test.device.name != null && (test.device.name == "HC-05" )));
       // Stop the discovery as soon as device is found.
       inst.cancelDiscovery();
       return disco.device;

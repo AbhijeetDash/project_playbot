@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
@@ -221,7 +223,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
                                 leading: const CircleAvatar(
                                   child: Icon(Icons.important_devices_outlined),
                                 ),
-                                trailing: isConneted
+                                trailing: !isConneted
                                     ? RawMaterialButton(
                                         onPressed: () {
                                           // Connect to the device.
@@ -247,6 +249,14 @@ class _ConnectScreenState extends State<ConnectScreen> {
                         ),
                       ),
                       const SizedBox(height: 24.0),
+                      TextButton(onPressed: (){
+                        connection.output.add(Uint8List.fromList('1'.codeUnits));
+                      }, child: Text("START")),
+                      TextButton(onPressed: (){
+                        connection.output.add(Uint8List.fromList('2'.codeUnits));
+                      }, child: Text("STOP")),
+                      const SizedBox(height: 24.0),
+
                       BlocBuilder<FirebaseBloc, FireState>(
                           builder: (context, state) {
                         if (state is FireRoomState) {}
