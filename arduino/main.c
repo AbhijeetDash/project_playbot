@@ -12,6 +12,11 @@
 #define MOTOR2_A 1
 #define MOTOR2_B 4
 
+// Define Motor directions.
+#define FORWARD 1
+#define REVERSE 2
+#define STOP 3
+
 // Defining Data Direction Registers
 #define PORTB_DIR DDRB
 #define PORTD_DIR DDRD
@@ -67,32 +72,31 @@ static uint8_t shift_latch;
 // Initialize Timer2 for Fast PWM mode
 void INIT_PWM()
 {
-    if(isTimerInitialised != 0){
+    if (isTimerInitialised != 0)
+    {
         return;
-        USART_SEND_STRING("PWM ALREADY ENABLED\n");
     }
     isTimerInitialised = 1;
-    USART_SEND_STRING("ENABLE PWM\n");
 
     // Set fast PWM mode, turn on OC2A and OC2B
     TCCR2A |= _BV(COM2A1) | _BV(COM2B1) | _BV(WGM20) | _BV(WGM21);
-    TCCR2B = 1;  // No prescaler
+    TCCR2B = 1; // No prescaler
 
     // Output compare register for Counter/Timer2
-    OCR2A = 0;  // Low duty cycle for motor 1 (PB3 | PIN 11)
-    OCR2B = 0;  // Low duty cycle for motor 2 (PD3 | PIN 3)
+    OCR2A = 0; // Low duty cycle for motor 1 (PB3 | PIN 11)
+    OCR2B = 0; // Low duty cycle for motor 2 (PD3 | PIN 3)
 
     // Set PIN 11 and PIN 3 as output
     PORTB_DIR |= (1 << PB3);
     PORTD_DIR |= (1 << PD3);
 
-    USART_SEND_STRING("ENABLE PWM - END\n");
+    // Delay to make sure PWM is enabled.
+    _delay_ms(100);
 }
 
 // Set the values to the shift register
 void SETUP_LATCH()
 {
-    USART_SEND_STRING("SET LATCH\n");
     uint8_t i;
 
     // Initialize MOTORLATCH and MOTORDATA to LOW
@@ -122,57 +126,68 @@ void SETUP_LATCH()
 
     // Latch the data by pulsing MOTORLATCH
     PORTB |= (1 << MOTORLATCH);
-
-    USART_SEND_STRING("SET LATCH - END\n");
-    shift_latch = 0;
 }
 
 // Set the duty cycle for Timer2
-void SET_MOTOR_SPEED(uint8_t speed)
+void SET_MOTOR1_SPEED(uint8_t speed)
 {
-    OCR2A |= speed;
-    OCR2B |= speed;
-    _delay_ms(1);
-    USART_SEND_STRING("SETTING SPEED - END\n");
+    OCR2A = speed;
+    _delay_ms(100);
+}
+
+void SET_MOTOR2_SPEED(uint8_t speed)
+{
+    OCR2B = speed;
+    _delay_ms(100);
 }
 
 void ENABLE_MOTORS()
 {
-    USART_SEND_STRING("ENABLE MOTOR - Start\n");
-
+    // Set pins as output
     PORTB_DIR |= (1 << MOTORLATCH) | (1 << MOTORDATA);
-    USART_SEND_STRING("Configured PORTB_DIR\n");
-
     PORTD_DIR |= (1 << MOTORENABLE) | (1 << MOTORCLK);
-    USART_SEND_STRING("Configured PORTD_DIR\n");
 
+    // reset the shift register
     shift_latch = 0;
     SETUP_LATCH();
-    USART_SEND_STRING("Latch Setup Complete\n");
 
+    // Enable the motors.
     PORTD &= ~(1 << MOTORENABLE);
-    USART_SEND_STRING("ENABLE MOTOR - END\n");
 }
 
-void RUN_MOTOR(uint8_t motornum)
+void RUN_MOTOR(uint8_t motornum, uint8_t direction)
 {
-    shift_latch = 0;
-
     USART_SEND_STRING("START MOTOR\n");
     uint8_t a, b;
-    switch (motornum){
+    switch (motornum)
+    {
     case 1:
-        a = MOTOR1_A; b = MOTOR1_B; break;
+        a = MOTOR1_A;
+        b = MOTOR1_B;
+        break;
     case 2:
-        a = MOTOR2_A; b = MOTOR2_B; break;
+        a = MOTOR2_A;
+        b = MOTOR2_B;
+        break;
     default:
         return;
     }
 
+    switch (direction)
+    {
+    case FORWARD:
+        shift_latch |= _BV(a);
+        shift_latch &= ~_BV(b);
+        SETUP_LATCH();
+        break;
+    case REVERSE:
+        shift_latch |= _BV(b);
+        shift_latch &= ~_BV(a);
+        SETUP_LATCH();
+        break;
+    }
+
     // We only need to run forward.
-    shift_latch |= _BV(a);
-    shift_latch &= ~_BV(b);
-    SETUP_LATCH();
 
     USART_SEND_STRING("START MOTOR - END\n");
 }
@@ -180,15 +195,17 @@ void RUN_MOTOR(uint8_t motornum)
 void STOP_MOTOR(uint8_t motornum)
 {
     USART_SEND_STRING("STOP MOTOR\n");
-
-    shift_latch = 0;
-
     uint8_t a, b;
-    switch (motornum){
+    switch (motornum)
+    {
     case 1:
-        a = MOTOR1_A; b = MOTOR1_B; break;
+        a = MOTOR1_A;
+        b = MOTOR1_B;
+        break;
     case 2:
-        a = MOTOR2_A; b = MOTOR2_B; break;
+        a = MOTOR2_A;
+        b = MOTOR2_B;
+        break;
     default:
         return;
     }
@@ -210,8 +227,6 @@ int main(void)
     // Initialise Timer for Motor PWM
     INIT_PWM();
 
-    _delay_ms(1);
-
     // Enable Motors
     ENABLE_MOTORS();
 
@@ -220,26 +235,45 @@ int main(void)
         // Wait for the input
         const uint8_t input = USART_RECEIVE();
 
-        _delay_ms(500);
+        _delay_ms(100);
 
+        // MOTOR 1 FORWARD
         if (input == '1')
         {
-            USART_SEND_STRING("START MOTOR\n");
-            // Start Motor 1
-            USART_SEND_STRING("SETTING SPEED - 255\n");
-            SET_MOTOR_SPEED(255);
-            _delay_ms(100);
-            RUN_MOTOR(1);
+            SET_MOTOR1_SPEED(255);
+            RUN_MOTOR(1, FORWARD);
         }
 
+        // MOTOR 1 REVERSE
         if (input == '2')
         {
-            USART_SEND_STRING("STOP MOTOR\n");
-            // Stop Motor 1
-            USART_SEND_STRING("SETTING SPEED - 0\n");
-            SET_MOTOR_SPEED(0);
+            SET_MOTOR1_SPEED(255);
+            RUN_MOTOR(1, REVERSE);
+        }
+
+        // MOTOR 2 FORWARD
+        if (input == '3')
+        {
+            SET_MOTOR2_SPEED(255);
+            RUN_MOTOR(2, FORWARD);
+        }
+
+        // MOTOR 2 REVERSE
+        if (input == '4')
+        {
+            SET_MOTOR2_SPEED(255);
+            RUN_MOTOR(2, REVERSE);
+        }
+
+        if(input == '0'){
+            shift_latch = 0;
+            // Reset the Latch
+            SETUP_LATCH();
             _delay_ms(100);
-            STOP_MOTOR(1);
+
+            // Close the PWM 
+            SET_MOTOR1_SPEED(0);
+            SET_MOTOR1_SPEED(0);
         }
     }
     return 0;

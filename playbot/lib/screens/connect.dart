@@ -249,14 +249,42 @@ class _ConnectScreenState extends State<ConnectScreen> {
                         ),
                       ),
                       const SizedBox(height: 24.0),
-                      TextButton(onPressed: (){
-                        connection.output.add(Uint8List.fromList('1'.codeUnits));
-                      }, child: Text("START")),
-                      TextButton(onPressed: (){
-                        connection.output.add(Uint8List.fromList('2'.codeUnits));
-                      }, child: Text("STOP")),
+                      TextButton(
+                        onPressed: () {
+                          connection.output
+                              .add(Uint8List.fromList('1'.codeUnits));
+                        },
+                        child: Text("M1 Forward"),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          connection.output
+                              .add(Uint8List.fromList('2'.codeUnits));
+                        },
+                        child: Text("M1 Reverse"),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          connection.output
+                              .add(Uint8List.fromList('3'.codeUnits));
+                        },
+                        child: Text("M2 Forward"),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          connection.output
+                              .add(Uint8List.fromList('4'.codeUnits));
+                        },
+                        child: Text("M2 Reverse"),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          connection.output
+                              .add(Uint8List.fromList('0'.codeUnits));
+                        },
+                        child: Text("Stop All"),
+                      ),
                       const SizedBox(height: 24.0),
-
                       BlocBuilder<FirebaseBloc, FireState>(
                           builder: (context, state) {
                         if (state is FireRoomState) {}
