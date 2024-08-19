@@ -11,6 +11,8 @@
 #define MOTOR1_B 3
 #define MOTOR2_A 1
 #define MOTOR2_B 4
+#define MOTOR3_A 5
+#define MOTOR3_B 7
 
 // Define Motor directions.
 #define FORWARD 1
@@ -80,11 +82,14 @@ void INIT_PWM()
 
     // Set fast PWM mode, turn on OC2A and OC2B
     TCCR2A |= _BV(COM2A1) | _BV(COM2B1) | _BV(WGM20) | _BV(WGM21);
+    TCCR0A |= _BV(COM0A1) | _BV(WGM00) | _BV(WGM01);
     TCCR2B = 1; // No prescaler
+    TCCR0B = 1; // No prescaler
 
     // Output compare register for Counter/Timer2
     OCR2A = 0; // Low duty cycle for motor 1 (PB3 | PIN 11)
     OCR2B = 0; // Low duty cycle for motor 2 (PD3 | PIN 3)
+    OCR0A = 0; // Low duty cycle for motor 3 (PD6 | PIN 6)
 
     // Set PIN 11 and PIN 3 as output
     PORTB_DIR |= (1 << PB3);
@@ -141,6 +146,11 @@ void SET_MOTOR2_SPEED(uint8_t speed)
     _delay_ms(100);
 }
 
+void SET_MOTOR3_SPEED(uint8_t speed){
+    OCR0A = speed;
+    _delay_ms(100);
+}
+
 void ENABLE_MOTORS()
 {
     // Set pins as output
@@ -168,6 +178,10 @@ void RUN_MOTOR(uint8_t motornum, uint8_t direction)
     case 2:
         a = MOTOR2_A;
         b = MOTOR2_B;
+        break;
+    case 3:
+        a = MOTOR3_A;
+        b = MOTOR3_B;
         break;
     default:
         return;
@@ -205,6 +219,10 @@ void STOP_MOTOR(uint8_t motornum)
     case 2:
         a = MOTOR2_A;
         b = MOTOR2_B;
+        break;
+    case 3:
+        a = MOTOR3_A;
+        b = MOTOR3_B;
         break;
     default:
         return;
@@ -263,6 +281,20 @@ int main(void)
         {
             SET_MOTOR2_SPEED(255);
             RUN_MOTOR(2, REVERSE);
+        }
+
+        // MOTOR 3 FORWARD
+        if (input == '5')
+        {
+            SET_MOTOR3_SPEED(255);
+            RUN_MOTOR(3, FORWARD);
+        }
+
+        // MOTOR 3 REVERSE
+        if (input == '6')
+        {
+            SET_MOTOR3_SPEED(255);
+            RUN_MOTOR(3, REVERSE);
         }
 
         if(input == '0'){

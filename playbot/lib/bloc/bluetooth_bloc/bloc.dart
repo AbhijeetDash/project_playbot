@@ -24,7 +24,6 @@ class BleBloc extends Bloc<BleEvent, BleState> {
   ) async {
     try {
       BluetoothState state = await service.getBluetoothState();
-      print(state.stringValue);
       emit(BleCurrentState(state: state));
     } catch (e) {
       rethrow;

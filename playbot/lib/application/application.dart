@@ -18,7 +18,7 @@ class _PlaybotState extends State<Playbot> {
 
   @override
   void initState() {
-    locator.registerSingleton<BluetoothService>(BluetoothServiceImpl());
+    locator.registerSingleton<BluetoothService>(BluetoothServiceImpl()); 
     super.initState();
   }
 

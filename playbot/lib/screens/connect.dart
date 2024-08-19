@@ -1,10 +1,10 @@
-import 'dart:typed_data';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:playbot/bloc/bluetooth_bloc/bloc.dart';
-import 'package:playbot/bloc/firebase_bloc/bloc.dart';
+import 'package:playbot/screens/control.dart';
 import 'package:playbot/utilities/util_assets.dart';
 
 import 'package:playbot/utilities/util_colors.dart';
@@ -20,7 +20,6 @@ class ConnectScreen extends StatefulWidget {
 class _ConnectScreenState extends State<ConnectScreen> {
   late BluetoothDevice device;
   late BluetoothConnection connection;
-  late TextEditingController textController;
   late final BleBloc bleBloc;
 
   bool bleStateOn = false;
@@ -30,23 +29,34 @@ class _ConnectScreenState extends State<ConnectScreen> {
 
   @override
   void initState() {
-    textController = TextEditingController();
     bleBloc = context.read<BleBloc>();
     super.initState();
   }
 
-  void showConnectionSuccess() {
-    final snackBar = SnackBar(
-      content: const Text('CONNECTED'),
-      action: SnackBarAction(
-        label: 'Undo',
-        onPressed: () {
-          // Some code to undo the change.
-        },
-      ),
-    );
+  void _navigateToControlScreen() {
+    Timer(const Duration(seconds: 2), () {
+      Navigator.of(context).pushReplacement(MaterialPageRoute(
+          builder: (context) => ControlScreen(
+                connection: connection,
+                device: device,
+              )));
+    });
+  }
 
-    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  void _showConnectionSuccess() {
+    WidgetsBinding.instance.addPostFrameCallback((value) {
+      final snackBar = SnackBar(
+        content: const Text('CONNECTED'),
+        action: SnackBarAction(
+          label: 'Undo',
+          onPressed: () {
+            // Some code to undo the change.
+          },
+        ),
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+    });
   }
 
   @override
@@ -90,7 +100,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
                     bleStateOn = true;
                   } else {
                     bleStateOn = false;
-                  }
+                  }              
                 }
 
                 if (state is BleEnableState) {
@@ -113,6 +123,10 @@ class _ConnectScreenState extends State<ConnectScreen> {
                 if (state is BleConnectSuccess) {
                   isConneted = true;
                   connection = state.connection;
+                  _showConnectionSuccess();
+
+                  // Get ready to navigate.
+                  _navigateToControlScreen();
                 }
 
                 return Padding(
@@ -249,160 +263,6 @@ class _ConnectScreenState extends State<ConnectScreen> {
                         ),
                       ),
                       const SizedBox(height: 24.0),
-                      TextButton(
-                        onPressed: () {
-                          connection.output
-                              .add(Uint8List.fromList('1'.codeUnits));
-                        },
-                        child: Text("M1 Forward"),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          connection.output
-                              .add(Uint8List.fromList('2'.codeUnits));
-                        },
-                        child: Text("M1 Reverse"),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          connection.output
-                              .add(Uint8List.fromList('3'.codeUnits));
-                        },
-                        child: Text("M2 Forward"),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          connection.output
-                              .add(Uint8List.fromList('4'.codeUnits));
-                        },
-                        child: Text("M2 Reverse"),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          connection.output
-                              .add(Uint8List.fromList('0'.codeUnits));
-                        },
-                        child: Text("Stop All"),
-                      ),
-                      const SizedBox(height: 24.0),
-                      BlocBuilder<FirebaseBloc, FireState>(
-                          builder: (context, state) {
-                        if (state is FireRoomState) {}
-
-                        return SizedBox(
-                          width: double.maxFinite,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "GAME ROOM",
-                                style:
-                                    Theme.of(context).textTheme.headlineMedium,
-                              ),
-                              const SizedBox(
-                                height: 6.0,
-                              ),
-                              Text(
-                                "Create a game room and invite other players to join.",
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyLarge!
-                                    .copyWith(letterSpacing: 2.0),
-                              ),
-                              const SizedBox(
-                                height: 12.0,
-                              ),
-                              RawMaterialButton(
-                                onPressed: () {},
-                                fillColor: PlayColors.buttonPurple,
-                                shape: const RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.all(
-                                        Radius.circular(12.0))),
-                                child: Container(
-                                  height: 40.0,
-                                  width: double.maxFinite,
-                                  alignment: Alignment.center,
-                                  child: Text(
-                                    "CREATE ROOM",
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .headlineMedium!
-                                        .copyWith(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16.0,
-                                            color: Colors.white),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(
-                                height: 12.0,
-                              ),
-                              SizedBox(
-                                width: double.maxFinite,
-                                child: Text(
-                                  "--- OR ---",
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyLarge!
-                                      .copyWith(
-                                          letterSpacing: 2.0,
-                                          fontWeight: FontWeight.bold),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                              const SizedBox(
-                                height: 12.0,
-                              ),
-                              Text(
-                                "Join a game room with other players to start a game.",
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyLarge!
-                                    .copyWith(letterSpacing: 2.0),
-                              ),
-                              const SizedBox(
-                                height: 12.0,
-                              ),
-                              TextField(
-                                controller: textController,
-                                decoration: const InputDecoration(
-                                  filled: true,
-                                  fillColor: Colors.white,
-                                  border: OutlineInputBorder(),
-                                  labelText: 'Enter room code',
-                                ),
-                              ),
-                              const SizedBox(
-                                height: 12.0,
-                              ),
-                              RawMaterialButton(
-                                onPressed: () {
-                                  // Add event to join the room.
-                                },
-                                fillColor: PlayColors.buttonOrange,
-                                shape: const RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.all(
-                                        Radius.circular(12.0))),
-                                child: Container(
-                                  height: 40.0,
-                                  width: double.maxFinite,
-                                  alignment: Alignment.center,
-                                  child: Text(
-                                    "JOIN ROOM",
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .headlineMedium!
-                                        .copyWith(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16.0,
-                                            color: Colors.white),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }),
                     ],
                   ),
                 );
